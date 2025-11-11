@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct Capital_ListApp: App {
@@ -35,6 +36,7 @@ struct Capital_ListApp: App {
                 AppLogger.success("App appeared on screen")
             }
         }
+        .modelContainer(DependencyContainer.shared.modelContainer)
     }
 }
 

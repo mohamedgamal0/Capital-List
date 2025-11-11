@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftData
 
 /// Dependency Injection Container for modular architecture
 
@@ -14,13 +15,25 @@ final class DependencyContainer {
     // MARK: - Shared Instances
     static let shared = DependencyContainer()
     
+    // MARK: - SwiftData
+    private(set) lazy var modelContainer: ModelContainer = {
+        let schema = Schema([FavoriteCountryModel.self])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
+        }
+    }()
+    
+    private(set) lazy var modelContext: ModelContext = {
+        modelContainer.mainContext
+    }()
+    
     // MARK: - Core Services
     private(set) lazy var apiService: APIService = {
         APIService()
-    }()
-    
-    private(set) lazy var localStorage: LocalStorage = {
-        LocalStorage()
     }()
     
     private(set) lazy var locationService: LocationServiceProtocol = {
@@ -38,7 +51,7 @@ final class DependencyContainer {
     }()
     
     private(set) lazy var favoriteCountryRepository: FavoriteCountryRepositoryProtocol = {
-        FavoriteCountryRepository(localStorage: localStorage)
+        FavoriteCountryRepository(modelContext: modelContext)
     }()
     
     // MARK: - Use Cases
