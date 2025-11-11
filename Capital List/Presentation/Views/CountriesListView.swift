@@ -9,18 +9,7 @@ import SwiftUI
 
 struct CountriesListView: View {
     // Static data
-    private let countries: [Country] = [
-        Country(name: "United States", capital: "Washington, D.C.", flag: "🇺🇸"),
-        Country(name: "United Kingdom", capital: "London", flag: "🇬🇧"),
-        Country(name: "France", capital: "Paris", flag: "🇫🇷"),
-        Country(name: "Germany", capital: "Berlin", flag: "🇩🇪"),
-        Country(name: "Japan", capital: "Tokyo", flag: "🇯🇵"),
-        Country(name: "Canada", capital: "Ottawa", flag: "🇨🇦"),
-        Country(name: "Australia", capital: "Canberra", flag: "🇦🇺"),
-        Country(name: "Italy", capital: "Rome", flag: "🇮🇹"),
-        Country(name: "Spain", capital: "Madrid", flag: "🇪🇸"),
-        Country(name: "Brazil", capital: "Brasília", flag: "🇧🇷")
-    ]
+    private let countries: [Country] = []
     
     var body: some View {
         List {
