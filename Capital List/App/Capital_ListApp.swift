@@ -25,7 +25,9 @@ struct Capital_ListApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                CountriesListView()
+            }
         }
         .modelContainer(sharedModelContainer)
     }

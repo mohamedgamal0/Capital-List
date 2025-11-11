@@ -28,6 +28,11 @@ struct CountriesListView: View {
                 CountryRowView(country: country)
             }
         }
+        .listStyle(.plain)
+        .background(AppColors.background)
+        .scrollContentBackground(.hidden)
+        .listRowInsets(EdgeInsets(top: AppSpacing.xs, leading: AppSpacing.md, bottom: AppSpacing.xs, trailing: AppSpacing.md))
+        .listRowBackground(Color.clear)
         .navigationTitle("Countries")
     }
 }

@@ -11,23 +11,28 @@ struct CountryRowView: View {
     let country: Country
     
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            Text(country.flag)
-                .font(.system(size: 32))
-            
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(country.name)
-                    .font(AppTypography.body)
-                    .foregroundColor(AppColors.textPrimary)
+        CardView {
+            HStack(spacing: AppSpacing.md) {
+                Text(country.flag)
+                    .font(.system(size: 32))
                 
-                Text(country.capital)
-                    .font(AppTypography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text(country.name)
+                        .font(AppTypography.body)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    IconLabel(
+                        icon: "building.2",
+                        text: country.capital,
+                        iconColor: AppColors.textSecondary,
+                        textColor: AppColors.textSecondary,
+                        fontSize: AppTypography.caption
+                    )
+                }
+                
+                Spacer()
             }
-            
-            Spacer()
         }
-        .padding(.vertical, AppSpacing.xs)
     }
 }
 
