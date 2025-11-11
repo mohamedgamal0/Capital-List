@@ -13,17 +13,17 @@ struct CountryRowView: View {
     var body: some View {
         CardView {
             HStack(spacing: AppSpacing.md) {
-                Text(country.flag)
+                Text("us")
                     .font(.system(size: 32))
                 
                 VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text(country.name)
+                    Text("us")
                         .font(AppTypography.body)
                         .foregroundColor(AppColors.textPrimary)
                     
                     IconLabel(
                         icon: "building.2",
-                        text: country.capital,
+                        text: "country capital",
                         iconColor: AppColors.textSecondary,
                         textColor: AppColors.textSecondary,
                         fontSize: AppTypography.caption
@@ -34,9 +34,5 @@ struct CountryRowView: View {
             }
         }
     }
-}
-
-#Preview {
-    CountryRowView(country: Country(name: "United States", capital: "Washington, D.C.", flag: "🇺🇸"))
 }
 
