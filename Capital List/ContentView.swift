@@ -18,8 +18,12 @@ struct ContentView: View {
                 ForEach(items) { item in
                     NavigationLink {
                         Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                            .font(AppTypography.body)
+                            .foregroundColor(AppColors.primary)
                     } label: {
                         Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                            .font(AppTypography.body)
+                            .foregroundColor(AppColors.error)
                     }
                 }
                 .onDelete(perform: deleteItems)
@@ -27,15 +31,19 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
+                        .foregroundColor(AppColors.primary)
                 }
                 ToolbarItem {
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
+                            .foregroundColor(AppColors.primary)
                     }
                 }
             }
         } detail: {
             Text("Select an item")
+                .font(AppTypography.body)
+                .foregroundColor(AppColors.textSecondary)
         }
     }
 
