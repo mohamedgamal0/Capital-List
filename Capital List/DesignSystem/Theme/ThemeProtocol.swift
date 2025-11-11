@@ -1,5 +1,5 @@
 //
-//  AppThemeProtocol.swift
+//  ThemeProtocol.swift
 //  Capital List
 //
 //  Created by Mohamed Gamal on 11/11/2025.
@@ -7,9 +7,8 @@
 
 import SwiftUI
 
-
 // MARK: - Theme Protocol
-protocol AppThemeProtocol: Observable {
+protocol ThemeProtocol: Observable {
     var colorScheme: ColorScheme? { get set }
     
     func setLightMode()

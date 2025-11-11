@@ -9,16 +9,14 @@ import SwiftUI
 import Observation
 
 @Observable
-final class AppTheme: AppThemeProtocol {
-    static let shared = AppTheme()
-    
+final class AppTheme: ThemeProtocol {
     var colorScheme: ColorScheme? = nil {
         didSet {
         }
     }
     
-    private init() {
-        colorScheme = nil
+    init(colorScheme: ColorScheme? = nil) {
+        self.colorScheme = colorScheme
     }
     
     /// Set app to light mode
@@ -60,7 +58,7 @@ struct ThemeModifier: ViewModifier {
 }
 
 extension View {
-    func appTheme(_ theme: AppTheme = AppTheme.shared) -> some View {
+    func appTheme(_ theme: AppTheme) -> some View {
         modifier(ThemeModifier(theme: theme))
     }
 }
