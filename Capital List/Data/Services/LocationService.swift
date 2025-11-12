@@ -7,18 +7,33 @@
 
 import Foundation
 import CoreLocation
+import MapKit
 
 final class LocationService: NSObject, LocationServiceProtocol {
+    
+    // MARK: - Properties
+    
     private let locationManager: CLLocationManager
     private var continuation: CheckedContinuation<String?, Error>?
-    private let defaultCountryCode = "US" // Default to United States if location denied
+    private let defaultCountryCode: String
+    private let permissionCheckDelay: TimeInterval
     
-    override init() {
-        self.locationManager = CLLocationManager()
+    // MARK: - Initialization
+    
+    init(
+        locationManager: CLLocationManager = CLLocationManager(),
+        defaultCountryCode: String = AppConstants.Location.defaultCountryCode,
+        permissionCheckDelay: TimeInterval = AppConstants.Location.permissionCheckDelay
+    ) {
+        self.locationManager = locationManager
+        self.defaultCountryCode = defaultCountryCode
+        self.permissionCheckDelay = permissionCheckDelay
         super.init()
         self.locationManager.delegate = self
-        self.locationManager.desiredAccuracy = kCLLocationAccuracyReduced
+        self.locationManager.desiredAccuracy = AppConstants.Location.locationAccuracy
     }
+    
+    // MARK: - LocationServiceProtocol Implementation
     
     func requestLocationPermission() async -> Bool {
         let status = locationManager.authorizationStatus
@@ -29,9 +44,10 @@ final class LocationService: NSObject, LocationServiceProtocol {
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
             return await withCheckedContinuation { continuation in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + self.permissionCheckDelay) {
                     let newStatus = self.locationManager.authorizationStatus
-                    continuation.resume(returning: newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways)
+                    let isAuthorized = newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways
+                    continuation.resume(returning: isAuthorized)
                 }
             }
         default:
@@ -51,35 +67,68 @@ final class LocationService: NSObject, LocationServiceProtocol {
     }
 }
 
+// MARK: - CLLocationManagerDelegate
+
 extension LocationService: CLLocationManagerDelegate {
+    
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.first else {
-            Task { @MainActor in
-                continuation?.resume(returning: defaultCountryCode)
-                continuation = nil
+            Task { @MainActor [weak self] in
+                self?.handleLocationUpdateFailure()
             }
             return
         }
         
-        CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
-            Task { @MainActor in
-                if let error = error {
-                    self.continuation?.resume(throwing: error)
-                    self.continuation = nil
-                    return
-                }
-                
-                let countryCode = placemarks?.first?.isoCountryCode ?? self.defaultCountryCode
-                self.continuation?.resume(returning: countryCode)
-                self.continuation = nil
-            }
+        Task { @MainActor [weak self] in
+            self?.reverseGeocodeLocation(location)
         }
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            self?.handleLocationFailure()
+        }
+    }
+    
+    // MARK: - Private Helpers
+    
+    private func handleLocationUpdateFailure() {
+        continuation?.resume(returning: defaultCountryCode)
+        continuation = nil
+    }
+    
+    private func reverseGeocodeLocation(_ location: CLLocation) {
+        let defaultCode = defaultCountryCode
+        
+        Task {
+            do {
+                let span = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                let region = MKCoordinateRegion(center: location.coordinate, span: span)
+                
+                let request = MKLocalSearch.Request()
+                request.region = region
+                request.naturalLanguageQuery = "location"
+                
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
+                
+                if let firstResult = response.mapItems.first {
+                    let countryCode: String?
+                    countryCode = firstResult.placemark.isoCountryCode
+                    continuation?.resume(returning: countryCode ?? defaultCode)
+                } else {
+                    continuation?.resume(returning: defaultCode)
+                }
+                continuation = nil
+            } catch {
+                continuation?.resume(throwing: error)
+                continuation = nil
+            }
+        }
+    }
+    
+    private func handleLocationFailure() {
             continuation?.resume(returning: defaultCountryCode)
             continuation = nil
-        }
     }
 }
