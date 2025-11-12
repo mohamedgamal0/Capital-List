@@ -7,7 +7,8 @@
 
 import Foundation
 
-actor FavoriteCountriesUseCase {
+
+final class FavoriteCountriesUseCase {
     private let repository: FavoriteCountryRepositoryProtocol
     
     init(repository: FavoriteCountryRepositoryProtocol) {
@@ -21,7 +22,7 @@ actor FavoriteCountriesUseCase {
     func addFavorite(_ country: Country) async throws {
         let canAdd = try await repository.canAddMore()
         guard canAdd else {
-            throw FavoriteCountryError.maxLimitReached
+            throw FavoriteCountryError.maxFavoritesReached
         }
         try await repository.addFavoriteCountry(country)
     }
@@ -36,17 +37,6 @@ actor FavoriteCountriesUseCase {
     
     func canAddMore() async throws -> Bool {
         return try await repository.canAddMore()
-    }
-}
-
-enum FavoriteCountryError: LocalizedError {
-    case maxLimitReached
-    
-    var errorDescription: String? {
-        switch self {
-        case .maxLimitReached:
-            return "You can only add up to 5 countries to your favorites."
-        }
     }
 }
 

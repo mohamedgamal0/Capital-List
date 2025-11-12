@@ -10,7 +10,7 @@ import SwiftData
 
 /// Dependency Injection Container for modular architecture
 
-final class DependencyContainer {
+final class DependencyContainer: DependencyContainerProtocol {
     
     // MARK: - Shared Instances
     static let shared = DependencyContainer()
@@ -23,6 +23,7 @@ final class DependencyContainer {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
+            assertionFailure("Could not create ModelContainer: \(error)")
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
@@ -32,7 +33,7 @@ final class DependencyContainer {
     }()
     
     // MARK: - Core Services
-    private(set) lazy var apiService: APIService = {
+    private(set) lazy var apiService: APIServiceProtocol = {
         APIService()
     }()
     
@@ -45,13 +46,19 @@ final class DependencyContainer {
         AppTheme()
     }()
     
+    // MARK: - Logger
+    private(set) lazy var logger: LoggerProtocol = {
+        AppLoggerAdapter()
+    }()
+    
     // MARK: - Repositories
     private(set) lazy var countryRepository: CountryRepositoryProtocol = {
         CountryRepository(apiService: apiService)
     }()
     
     private(set) lazy var favoriteCountryRepository: FavoriteCountryRepositoryProtocol = {
-        FavoriteCountryRepository(modelContext: modelContext)
+        // ModelContext must be accessed on MainActor
+        FavoriteCountryRepository(modelContext: modelContainer.mainContext)
     }()
     
     // MARK: - Use Cases
@@ -68,6 +75,8 @@ final class DependencyContainer {
     }()
     
     private(set) lazy var favoriteCountriesUseCase: FavoriteCountriesUseCase = {
+        // Safe to send FavoriteCountryRepository across actors because it's MainActor-isolated
+        // and all access happens on MainActor
         FavoriteCountriesUseCase(repository: favoriteCountryRepository)
     }()
     
@@ -76,12 +85,16 @@ final class DependencyContainer {
         CountriesViewModel(
             favoriteUseCase: favoriteCountriesUseCase,
             getCountryByCodeUseCase: getCountryByCodeUseCase,
-            locationService: locationService
+            locationService: locationService,
+            logger: logger
         )
     }
     
     func makeSearchViewModel() -> SearchViewModel {
-        SearchViewModel(searchUseCase: searchCountryUseCase)
+        SearchViewModel(
+            searchUseCase: searchCountryUseCase,
+            logger: logger
+        )
     }
     
     private init() {}

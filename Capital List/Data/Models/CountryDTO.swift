@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct CountryDTO: Codable {
+struct CountryDTO: Codable, Sendable {
     let name: CountryNameDTO
     let capital: [String]?
     let currencies: [String: CurrencyDTO]?
@@ -18,18 +18,20 @@ struct CountryDTO: Codable {
     }
 }
 
-struct CountryNameDTO: Codable {
+struct CountryNameDTO: Codable, Sendable {
     let common: String
     let official: String?
 }
 
-struct CurrencyDTO: Codable {
+struct CurrencyDTO: Codable, Sendable {
     let name: String?
     let symbol: String?
 }
 
 extension CountryDTO: DomainConvertible {
-    func toDomain() -> Country {
+    /// Converts DTO to domain model
+    /// Marked as nonisolated since it's a pure transformation with no actor isolation requirements
+    nonisolated func toDomain() -> Country {
         Country(
             name: CountryName(common: name.common, official: name.official),
             capital: capital,

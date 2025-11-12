@@ -7,7 +7,9 @@
 
 import Foundation
 
-protocol FavoriteCountryRepositoryProtocol {
+/// Protocol for favorite country repository operations
+/// Marked as Sendable to allow safe cross-actor usage
+nonisolated protocol FavoriteCountryRepositoryProtocol: Sendable {
     func getFavoriteCountries() async throws -> [Country]
     func addFavoriteCountry(_ country: Country) async throws
     func removeFavoriteCountry(_ country: Country) async throws

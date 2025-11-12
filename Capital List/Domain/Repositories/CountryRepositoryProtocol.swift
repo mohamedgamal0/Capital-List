@@ -7,7 +7,9 @@
 
 import Foundation
 
-protocol CountryRepositoryProtocol {
+/// Protocol for country repository operations
+/// Marked as Sendable to allow safe cross-actor usage
+nonisolated protocol CountryRepositoryProtocol: Sendable {
     func fetchAllCountries() async throws -> [Country]
     func searchCountry(by name: String) async throws -> [Country]
     func getCountry(by code: String) async throws -> Country?

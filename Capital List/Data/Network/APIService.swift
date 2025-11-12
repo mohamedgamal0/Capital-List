@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// API-related errors
 enum APIError: LocalizedError {
     case invalidURL
     case invalidResponse
@@ -17,31 +18,42 @@ enum APIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid URL"
+            return AppConstants.ErrorMessages.invalidURL
         case .invalidResponse:
-            return "Invalid response from server"
+            return AppConstants.ErrorMessages.invalidResponse
         case .httpError(let code):
             return "HTTP error with code: \(code)"
         case .decodingError(let error):
-            return "Failed to decode response: \(error.localizedDescription)"
+            return "\(AppConstants.ErrorMessages.decodingFailed): \(error.localizedDescription)"
         case .networkError(let error):
-            return "Network error: \(error.localizedDescription)"
+            return "\(AppConstants.ErrorMessages.networkError): \(error.localizedDescription)"
         }
     }
 }
 
-actor APIService {
-    private let baseURL = "https://restcountries.com/v3.1"
+/// API service for making network requests
+
+actor APIService: APIServiceProtocol {
+    
+    // MARK: - Properties
+    
+    private let baseURL: String
     private let session: URLSession
+    private let requiredFields: String
     
-    // Required fields for v3.1 API
-    private let requiredFields = "name,capital,currencies,cca2"
+    // MARK: - Initialization
     
-    init(session: URLSession = .shared) {
+    init(
+        baseURL: String = AppConstants.API.baseURL,
+        session: URLSession = .shared,
+        requiredFields: String = AppConstants.API.requiredFields
+    ) {
+        self.baseURL = baseURL
         self.session = session
+        self.requiredFields = requiredFields
     }
     
-    func fetch<T: Decodable>(endpoint: String) async throws -> T {
+    nonisolated func fetch<T: Decodable>(endpoint: String) async throws -> T {
         guard var urlComponents = URLComponents(string: "\(baseURL)/\(endpoint)") else {
             throw APIError.invalidURL
         }

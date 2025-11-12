@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 import Observation
 
-@MainActor
 @Observable
 final class SearchViewModel {
     var searchText = ""
@@ -18,18 +17,23 @@ final class SearchViewModel {
     var errorMessage: String?
     
     private let searchUseCase: SearchCountryUseCase
+    private let logger: LoggerProtocol
     private var searchTask: Task<Void, Never>?
     
-    init(searchUseCase: SearchCountryUseCase) {
+    init(
+        searchUseCase: SearchCountryUseCase,
+        logger: LoggerProtocol
+    ) {
         self.searchUseCase = searchUseCase
+        self.logger = logger
     }
     
     func search() {
-        AppLogger.info("Search triggered with query: '\(searchText)'")
+        logger.info("Search triggered with query: '\(searchText)'")
         searchTask?.cancel()
         
         guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else {
-            AppLogger.debug("Empty search query, clearing results")
+            logger.debug("Empty search query, clearing results")
             searchResults = []
             return
         }
@@ -39,18 +43,18 @@ final class SearchViewModel {
         
         searchTask = Task {
             do {
-                AppLogger.debug("Executing search for: '\(searchText)'")
+                logger.debug("Executing search for: '\(searchText)'")
                 let results = try await searchUseCase.execute(query: searchText)
                 if !Task.isCancelled {
                     searchResults = results
                     isLoading = false
-                    AppLogger.success("Search completed: \(results.count) results")
+                    logger.success("Search completed: \(results.count) results")
                 } else {
-                    AppLogger.debug("Search was cancelled")
+                    logger.debug("Search was cancelled")
                 }
             } catch {
                 if !Task.isCancelled {
-                    AppLogger.error("Search error: \(error.localizedDescription)")
+                    logger.error("Search error: \(error.localizedDescription)")
                     errorMessage = error.localizedDescription
                     isLoading = false
                 }
