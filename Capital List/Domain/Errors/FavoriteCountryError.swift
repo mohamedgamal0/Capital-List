@@ -16,9 +16,9 @@ enum FavoriteCountryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .countryCodeRequired:
-            return AppConstants.ErrorMessages.countryCodeRequired
+            return "Country code is required"
         case .maxFavoritesReached:
-            return AppConstants.ErrorMessages.maxFavoritesReached
+            return "Maximum number of favorites reached"
         }
     }
 }
