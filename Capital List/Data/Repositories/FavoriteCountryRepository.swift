@@ -8,12 +8,23 @@
 import Foundation
 import SwiftData
 
-actor FavoriteCountryRepository: FavoriteCountryRepositoryProtocol {
-    private let modelContext: ModelContext
-    private let maxFavorites = 5
+final class FavoriteCountryRepository: FavoriteCountryRepositoryProtocol, @unchecked Sendable {
     
-    init(modelContext: ModelContext) {
+    // MARK: - Properties
+    
+    /// ModelContext is not Sendable, but safe to use within MainActor context
+    /// Using nonisolated(unsafe) as recommended for SwiftData ModelContext in MainActor-isolated types
+    nonisolated(unsafe) private let modelContext: ModelContext
+    private let maxFavorites: Int
+    
+    // MARK: - Initialization
+    
+    init(
+        modelContext: ModelContext,
+        maxFavorites: Int = AppConstants.Favorites.maxCount
+    ) {
         self.modelContext = modelContext
+        self.maxFavorites = maxFavorites
     }
     
     func getFavoriteCountries() async throws -> [Country] {
@@ -26,7 +37,7 @@ actor FavoriteCountryRepository: FavoriteCountryRepositoryProtocol {
     
     func addFavoriteCountry(_ country: Country) async throws {
         guard let code = country.cca2?.uppercased() else {
-            throw NSError(domain: "FavoriteCountryRepository", code: 1, userInfo: [NSLocalizedDescriptionKey: "Country code is required"])
+            throw FavoriteCountryError.countryCodeRequired
         }
         
         // Check if already exists
@@ -41,7 +52,7 @@ actor FavoriteCountryRepository: FavoriteCountryRepositoryProtocol {
         // Check if we can add more
         let allModels = try modelContext.fetch(FetchDescriptor<FavoriteCountryModel>())
         guard allModels.count < maxFavorites else {
-            throw NSError(domain: "FavoriteCountryRepository", code: 2, userInfo: [NSLocalizedDescriptionKey: "Maximum number of favorites reached"])
+            throw FavoriteCountryError.maxFavoritesReached
         }
         
         let model = FavoriteCountryModel.from(country)
@@ -51,7 +62,7 @@ actor FavoriteCountryRepository: FavoriteCountryRepositoryProtocol {
     
     func removeFavoriteCountry(_ country: Country) async throws {
         guard let code = country.cca2?.uppercased() else {
-            throw NSError(domain: "FavoriteCountryRepository", code: 1, userInfo: [NSLocalizedDescriptionKey: "Country code is required"])
+            throw FavoriteCountryError.countryCodeRequired
         }
         
         let descriptor = FetchDescriptor<FavoriteCountryModel>(

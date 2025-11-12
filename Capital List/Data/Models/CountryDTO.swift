@@ -29,7 +29,9 @@ struct CurrencyDTO: Codable {
 }
 
 extension CountryDTO: DomainConvertible {
-    func toDomain() -> Country {
+    /// Converts DTO to domain model
+    /// Marked as nonisolated since it's a pure transformation with no actor isolation requirements
+    nonisolated func toDomain() -> Country {
         Country(
             name: CountryName(common: name.common, official: name.official),
             capital: capital,
