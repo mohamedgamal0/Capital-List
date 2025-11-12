@@ -10,10 +10,10 @@ import Foundation
 /// Repository implementation for country data
 /// Conforms to Sendable through actor isolation
 actor CountryRepository: CountryRepositoryProtocol, @unchecked Sendable {
-    private let apiService: APIService
+    private let apiService: APIServiceProtocol
     private var cachedCountries: [Country]?
     
-    init(apiService: APIService) {
+    init(apiService: APIServiceProtocol) {
         self.apiService = apiService
     }
     
