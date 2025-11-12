@@ -31,7 +31,6 @@ final class LocationServiceTests: XCTestCase {
     
     // MARK: - Initialization Tests
     
-    @MainActor
     func testInitialization_CreatesLocationService() {
         // Given & When
         let service = LocationService()
@@ -44,7 +43,6 @@ final class LocationServiceTests: XCTestCase {
     
     // MARK: - requestLocationPermission Tests
     
-    @MainActor
     func testRequestLocationPermission_WhenAuthorizedWhenInUse_ReturnsTrue() async {
         
         let result = await sut.requestLocationPermission()
@@ -53,7 +51,6 @@ final class LocationServiceTests: XCTestCase {
                      "Should return a boolean value")
     }
     
-    @MainActor
     func testRequestLocationPermission_WhenAuthorizedAlways_ReturnsTrue() async {
         // Given: Service is initialized
         // When: Permission is already authorized always
@@ -66,7 +63,6 @@ final class LocationServiceTests: XCTestCase {
                      "Should return a boolean value")
     }
     
-    @MainActor
     func testRequestLocationPermission_WhenNotDetermined_RequestsPermission() async {
         // Given: Service is initialized
         // When: Permission status is not determined
@@ -79,7 +75,6 @@ final class LocationServiceTests: XCTestCase {
                      "Should return a boolean value after requesting permission")
     }
     
-    @MainActor
     func testRequestLocationPermission_WhenDenied_ReturnsFalse() async {
         // Given: Service is initialized
         // When: Permission is denied
@@ -93,7 +88,6 @@ final class LocationServiceTests: XCTestCase {
                      "Should return a boolean value")
     }
     
-    @MainActor
     func testRequestLocationPermission_WhenRestricted_ReturnsFalse() async {
         // Given: Service is initialized
         // When: Permission is restricted
@@ -105,7 +99,7 @@ final class LocationServiceTests: XCTestCase {
                      "Should return a boolean value")
     }
     
-    @MainActor
+    
     func testRequestLocationPermission_IsAsync() async {
         // Given: Service is initialized
         // When: Permission is requested
@@ -121,7 +115,6 @@ final class LocationServiceTests: XCTestCase {
     
     // MARK: - getCurrentCountryCode Tests
     
-    @MainActor
     func testGetCurrentCountryCode_WhenPermissionDenied_ReturnsDefaultCountryCode() async {
         // Given: Permission is denied
         // When: getCurrentCountryCode is called
@@ -139,7 +132,6 @@ final class LocationServiceTests: XCTestCase {
         }
     }
     
-    @MainActor
     func testGetCurrentCountryCode_WhenPermissionGranted_ReturnsCountryCode() async {
         // Given: Permission is granted
         // When: getCurrentCountryCode is called
@@ -155,7 +147,6 @@ final class LocationServiceTests: XCTestCase {
         }
     }
     
-    @MainActor
     func testGetCurrentCountryCode_ReturnsValidFormat() async {
         // Given: Service is initialized
         // When: getCurrentCountryCode is called
@@ -176,7 +167,6 @@ final class LocationServiceTests: XCTestCase {
         }
     }
     
-    @MainActor
     func testGetCurrentCountryCode_HandlesGeocodingError() async {
         // Given: Location is available but geocoding fails
         // When: getCurrentCountryCode is called
@@ -189,7 +179,6 @@ final class LocationServiceTests: XCTestCase {
                      "Should return country code or error")
     }
     
-    @MainActor
     func testGetCurrentCountryCode_WhenLocationFails_ReturnsDefaultCountryCode() async {
         // Given: Location request fails
         // When: getCurrentCountryCode is called
@@ -203,7 +192,6 @@ final class LocationServiceTests: XCTestCase {
                        "Should return a country code even on failure")
     }
     
-    @MainActor
     func testGetCurrentCountryCode_WhenEmptyLocations_ReturnsDefaultCountryCode() async {
         // Given: Location update returns empty array
         // When: getCurrentCountryCode is called
@@ -217,7 +205,6 @@ final class LocationServiceTests: XCTestCase {
                        "Should return a country code")
     }
     
-    @MainActor
     func testGetCurrentCountryCode_WhenNoPlacemark_ReturnsDefaultCountryCode() async {
         // Given: Location is available but no placemark
         // When: getCurrentCountryCode is called
@@ -236,7 +223,6 @@ final class LocationServiceTests: XCTestCase {
     
     // MARK: - Concurrency Tests
     
-    @MainActor
     func testGetCurrentCountryCode_HandlesConcurrentRequests() async {
         // Given: Service is initialized
         // When: Multiple concurrent requests are made
@@ -265,7 +251,6 @@ final class LocationServiceTests: XCTestCase {
         }
     }
     
-    @MainActor
     func testGetCurrentCountryCode_IsThreadSafe() async {
         // Given: Service is initialized
         // When: Requests are made from different threads
@@ -295,7 +280,6 @@ final class LocationServiceTests: XCTestCase {
     
     // MARK: - Protocol Conformance Tests
     
-    @MainActor
     func testLocationService_ConformsToLocationServiceProtocol() {
         // Given: LocationService instance
         // When: Checking protocol conformance
@@ -312,7 +296,6 @@ final class LocationServiceTests: XCTestCase {
                        "LocationService should conform to LocationServiceProtocol")
     }
     
-    @MainActor
     func testLocationService_ImplementsRequiredMethods() {
         // Given: LocationService instance
         // When: Checking method availability
@@ -333,7 +316,6 @@ final class LocationServiceTests: XCTestCase {
     
     // MARK: - Edge Cases & Error Handling
     
-    @MainActor
     func testGetCurrentCountryCode_CompletesWithinTimeout() async {
         // Given: Service is initialized
         // When: getCurrentCountryCode is called
@@ -347,7 +329,6 @@ final class LocationServiceTests: XCTestCase {
                          "Should complete within reasonable time")
     }
     
-    @MainActor
     func testGetCurrentCountryCode_DoesNotCrashOnMultipleCalls() async {
         // Given: Service is initialized
         // When: getCurrentCountryCode is called multiple times
@@ -364,7 +345,6 @@ final class LocationServiceTests: XCTestCase {
     
     /// Executes getCurrentCountryCode and returns result or error
     /// - Returns: Tuple containing country code and error (if any)
-    @MainActor
     private func executeGetCurrentCountryCode() async -> (countryCode: String?, error: Error?) {
         let expectation = expectation(description: "getCurrentCountryCode completes")
         var countryCode: String?
