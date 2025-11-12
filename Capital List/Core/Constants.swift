@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import CoreLocation
 
 /// Application-wide constants
 nonisolated enum AppConstants {
@@ -14,8 +13,6 @@ nonisolated enum AppConstants {
     // MARK: - Location Service
     enum Location {
         static let defaultCountryCode = "US"
-        static let permissionCheckDelay: TimeInterval = 0.1
-        static let locationAccuracy = kCLLocationAccuracyReduced
     }
     
     // MARK: - API
