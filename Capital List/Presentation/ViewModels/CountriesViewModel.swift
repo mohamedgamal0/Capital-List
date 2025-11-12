@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 import Observation
 
-@MainActor
 @Observable
 final class CountriesViewModel {
     var favoriteCountries: [Country] = []
