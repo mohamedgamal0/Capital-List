@@ -8,7 +8,8 @@
 import Foundation
 
 // MARK: - Country (v3.1 API Structure)
-struct Country: Codable, Identifiable, Equatable, Hashable {
+
+nonisolated struct Country: Codable, Identifiable, Equatable, Hashable {
     let id: String
     let name: CountryName
     let capital: [String]?
@@ -71,7 +72,7 @@ struct Country: Codable, Identifiable, Equatable, Hashable {
 }
 
 // MARK: - CountryName (v3.1 API Structure)
-struct CountryName: Codable, Equatable, Hashable {
+nonisolated struct CountryName: Codable, Equatable, Hashable {
     let common: String
     let official: String?
     
@@ -82,7 +83,7 @@ struct CountryName: Codable, Equatable, Hashable {
 }
 
 // MARK: - Currency (v3.1 API Structure)
-struct Currency: Codable, Equatable, Hashable {
+nonisolated struct Currency: Codable, Equatable, Hashable {
     let name: String?
     let symbol: String?
     
