@@ -51,7 +51,8 @@ final class DependencyContainer {
     }()
     
     private(set) lazy var favoriteCountryRepository: FavoriteCountryRepositoryProtocol = {
-        FavoriteCountryRepository(modelContext: modelContext)
+        // ModelContext must be accessed on MainActor
+        FavoriteCountryRepository(modelContext: modelContainer.mainContext)
     }()
     
     // MARK: - Use Cases
@@ -68,6 +69,8 @@ final class DependencyContainer {
     }()
     
     private(set) lazy var favoriteCountriesUseCase: FavoriteCountriesUseCase = {
+        // Safe to send FavoriteCountryRepository across actors because it's MainActor-isolated
+        // and all access happens on MainActor
         FavoriteCountriesUseCase(repository: favoriteCountryRepository)
     }()
     
