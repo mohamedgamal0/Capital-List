@@ -10,7 +10,7 @@ import SwiftData
 
 /// Dependency Injection Container for modular architecture
 
-final class DependencyContainer {
+final class DependencyContainer: DependencyContainerProtocol {
     
     // MARK: - Shared Instances
     static let shared = DependencyContainer()
@@ -23,6 +23,7 @@ final class DependencyContainer {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
+            assertionFailure("Could not create ModelContainer: \(error)")
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
@@ -32,7 +33,7 @@ final class DependencyContainer {
     }()
     
     // MARK: - Core Services
-    private(set) lazy var apiService: APIService = {
+    private(set) lazy var apiService: APIServiceProtocol = {
         APIService()
     }()
     
@@ -43,6 +44,11 @@ final class DependencyContainer {
     // MARK: - Theme
     private(set) lazy var appTheme: AppTheme = {
         AppTheme()
+    }()
+    
+    // MARK: - Logger
+    private(set) lazy var logger: LoggerProtocol = {
+        AppLoggerAdapter()
     }()
     
     // MARK: - Repositories
@@ -79,12 +85,16 @@ final class DependencyContainer {
         CountriesViewModel(
             favoriteUseCase: favoriteCountriesUseCase,
             getCountryByCodeUseCase: getCountryByCodeUseCase,
-            locationService: locationService
+            locationService: locationService,
+            logger: logger
         )
     }
     
     func makeSearchViewModel() -> SearchViewModel {
-        SearchViewModel(searchUseCase: searchCountryUseCase)
+        SearchViewModel(
+            searchUseCase: searchCountryUseCase,
+            logger: logger
+        )
     }
     
     private init() {}

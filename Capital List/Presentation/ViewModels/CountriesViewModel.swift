@@ -19,19 +19,22 @@ final class CountriesViewModel {
     private let favoriteUseCase: FavoriteCountriesUseCase
     private let getCountryByCodeUseCase: GetCountryByCodeUseCase
     private let locationService: LocationServiceProtocol
+    private let logger: LoggerProtocol
     
     init(
         favoriteUseCase: FavoriteCountriesUseCase,
         getCountryByCodeUseCase: GetCountryByCodeUseCase,
-        locationService: LocationServiceProtocol
+        locationService: LocationServiceProtocol,
+        logger: LoggerProtocol
     ) {
         self.favoriteUseCase = favoriteUseCase
         self.getCountryByCodeUseCase = getCountryByCodeUseCase
         self.locationService = locationService
+        self.logger = logger
     }
     
     func loadFavoriteCountries() async {
-        AppLogger.info("Loading favorite countries")
+        logger.info("Loading favorite countries")
         isLoading = true
         errorMessage = nil
         
@@ -39,9 +42,9 @@ final class CountriesViewModel {
             let favorites = try await favoriteUseCase.getFavorites()
             favoriteCountries = favorites
             canAddMore = try await favoriteUseCase.canAddMore()
-            AppLogger.success("Loaded \(favorites.count) favorite countries, canAddMore: \(canAddMore)")
+            logger.success("Loaded \(favorites.count) favorite countries, canAddMore: \(canAddMore)")
         } catch {
-            AppLogger.error("Error loading favorites: \(error.localizedDescription)")
+            logger.error("Error loading favorites: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
         }
         
@@ -49,19 +52,19 @@ final class CountriesViewModel {
     }
     
     func addFavoriteCountry(_ country: Country) async {
-        AppLogger.info("Adding favorite country: \(country.countryName)")
+        logger.info("Adding favorite country: \(country.countryName)")
         do {
             try await favoriteUseCase.addFavorite(country)
             await loadFavoriteCountries()
-            AppLogger.success("Successfully added \(country.countryName)")
+            logger.success("Successfully added \(country.countryName)")
         } catch {
-            AppLogger.error("Error adding favorite: \(error.localizedDescription)")
+            logger.error("Error adding favorite: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
         }
     }
     
     func removeFavoriteCountry(_ country: Country) async {
-        AppLogger.info("Removing favorite country: \(country.countryName)")
+        logger.info("Removing favorite country: \(country.countryName)")
         isLoading = true
         errorMessage = nil
         
@@ -76,10 +79,10 @@ final class CountriesViewModel {
             favoriteCountries = favorites
             canAddMore = try await favoriteUseCase.canAddMore()
             
-            AppLogger.success("Successfully removed \(country.countryName). Remaining: \(favorites.count)")
-            AppLogger.debug("Updated viewModel.favoriteCountries.count: \(favoriteCountries.count)")
+            logger.success("Successfully removed \(country.countryName). Remaining: \(favorites.count)")
+            logger.debug("Updated viewModel.favoriteCountries.count: \(favoriteCountries.count)")
         } catch {
-            AppLogger.error("Error removing favorite: \(error.localizedDescription)")
+            logger.error("Error removing favorite: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
         }
         
@@ -87,39 +90,39 @@ final class CountriesViewModel {
     }
     
     func loadInitialCountry() async {
-        AppLogger.info("Loading initial country based on location")
+        logger.info("Loading initial country based on location")
         do {
             let countryCode = try await locationService.getCurrentCountryCode()
             guard let code = countryCode else {
-                AppLogger.warning("No country code from location service, loading default")
+                logger.warning("No country code from location service, loading default")
                 await loadDefaultCountry()
                 return
             }
             
-            AppLogger.debug("Got country code: \(code), fetching country details")
+            logger.debug("Got country code: \(code), fetching country details")
             let country = try await getCountryByCodeUseCase.execute(code: code)
             if let country = country {
-                AppLogger.info("Found country: \(country.countryName), adding to favorites")
+                logger.info("Found country: \(country.countryName), adding to favorites")
                 await addFavoriteCountry(country)
             } else {
-                AppLogger.warning("Country not found for code: \(code), loading default")
+                logger.warning("Country not found for code: \(code), loading default")
                 await loadDefaultCountry()
             }
         } catch {
-            AppLogger.error("Error loading initial country: \(error.localizedDescription)")
+            logger.error("Error loading initial country: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             await loadDefaultCountry()
         }
     }
     
     private func loadDefaultCountry() async {
-        AppLogger.info("Loading default country (US)")
+        logger.info("Loading default country (US)")
         let defaultCountry = try? await getCountryByCodeUseCase.execute(code: "US")
         if let country = defaultCountry {
-            AppLogger.success("Found default country: \(country.countryName)")
+            logger.success("Found default country: \(country.countryName)")
             await addFavoriteCountry(country)
         } else {
-            AppLogger.error("Failed to load default country")
+            logger.error("Failed to load default country")
         }
     }
 }
