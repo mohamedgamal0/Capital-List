@@ -7,7 +7,8 @@
 
 import Foundation
 
-protocol FavoriteCountryRepositoryProtocol {
+/// Protocol for favorite country repository operations
+nonisolated protocol FavoriteCountryRepositoryProtocol {
     func getFavoriteCountries() async throws -> [Country]
     func addFavoriteCountry(_ country: Country) async throws
     func removeFavoriteCountry(_ country: Country) async throws

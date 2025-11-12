@@ -6,8 +6,9 @@
 //
 
 import Foundation
-import CoreLocation
 
+/// Protocol for location services
+/// Domain layer should not depend on CoreLocation framework
 protocol LocationServiceProtocol {
     func requestLocationPermission() async -> Bool
     func getCurrentCountryCode() async throws -> String?
