@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct CountryDTO: Codable {
+struct CountryDTO: Codable, Sendable {
     let name: CountryNameDTO
     let capital: [String]?
     let currencies: [String: CurrencyDTO]?
@@ -18,12 +18,12 @@ struct CountryDTO: Codable {
     }
 }
 
-struct CountryNameDTO: Codable {
+struct CountryNameDTO: Codable, Sendable {
     let common: String
     let official: String?
 }
 
-struct CurrencyDTO: Codable {
+struct CurrencyDTO: Codable, Sendable {
     let name: String?
     let symbol: String?
 }

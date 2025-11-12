@@ -32,7 +32,8 @@ enum APIError: LocalizedError {
 }
 
 /// API service for making network requests
-actor APIService {
+
+actor APIService: APIServiceProtocol {
     
     // MARK: - Properties
     
@@ -52,7 +53,7 @@ actor APIService {
         self.requiredFields = requiredFields
     }
     
-    func fetch<T: Decodable>(endpoint: String) async throws -> T {
+    nonisolated func fetch<T: Decodable>(endpoint: String) async throws -> T {
         guard var urlComponents = URLComponents(string: "\(baseURL)/\(endpoint)") else {
             throw APIError.invalidURL
         }
