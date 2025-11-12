@@ -9,11 +9,12 @@ import XCTest
 import CoreLocation
 @testable import Capital_List
 
+@MainActor
 final class LocationServiceTests: XCTestCase {
     
     // MARK: - Properties
     
-    private var sut: LocationService!
+    nonisolated(unsafe) private var sut: LocationService!
     private let defaultCountryCode = "US"
     private let testTimeout: TimeInterval = 5.0
     
@@ -120,7 +121,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should return default country code "US"
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         // If permission is denied, should return "US"
         // Otherwise, may return actual country code
@@ -137,7 +138,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should return a valid country code
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         XCTAssertNotNil(result.countryCode,
                        "Should return a country code")
@@ -152,7 +153,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should return valid format (2-letter ISO code or "US")
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         if let code = result.countryCode {
             let isValidFormat = code == defaultCountryCode || 
@@ -172,7 +173,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should handle error gracefully
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         // Should either return default country code or throw error
         XCTAssertTrue(result.countryCode != nil || result.error != nil,
@@ -184,7 +185,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should return default country code "US"
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         // On location failure, should return default country code
         // Note: Actual behavior depends on system state
@@ -197,7 +198,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should return default country code "US"
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         // If locations array is empty, should return default
         // Note: This is tested indirectly through the service behavior
@@ -210,7 +211,7 @@ final class LocationServiceTests: XCTestCase {
         // When: getCurrentCountryCode is called
         // Then: Should return default country code "US"
         
-        let result = await executeGetCurrentCountryCode()
+        let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         
         // If placemark is nil, should return default
         XCTAssertNotNil(result.countryCode,
@@ -231,18 +232,34 @@ final class LocationServiceTests: XCTestCase {
         let expectation = expectation(description: "Concurrent requests complete")
         expectation.expectedFulfillmentCount = 3
         
-        var results: [(countryCode: String?, error: Error?)] = []
+        // Use an actor to safely collect results
+        actor ResultsCollector {
+            private var results: [(countryCode: String?, error: Error?)] = []
+            
+            func add(_ result: (countryCode: String?, error: Error?)) {
+                results.append(result)
+            }
+            
+            func getAll() -> [(countryCode: String?, error: Error?)] {
+                return results
+            }
+        }
         
+        let collector = ResultsCollector()
+        
+        let service = sut!
+        let timeout = testTimeout
         for _ in 0..<3 {
             Task {
-                let result = await executeGetCurrentCountryCode()
-                results.append(result)
+                let result = await Self.executeGetCurrentCountryCodeStatic(service: service, timeout: timeout)
+                await collector.add(result)
                 expectation.fulfill()
             }
         }
         
         await fulfillment(of: [expectation], timeout: testTimeout * 3)
         
+        let results = await collector.getAll()
         XCTAssertEqual(results.count, 3,
                       "All concurrent requests should complete")
         results.forEach { result in
@@ -259,21 +276,40 @@ final class LocationServiceTests: XCTestCase {
         let expectation = expectation(description: "Thread-safe requests complete")
         expectation.expectedFulfillmentCount = 2
         
-        var result1: (countryCode: String?, error: Error?)?
-        var result2: (countryCode: String?, error: Error?)?
+        // Use an actor to safely store results
+        actor ResultsStorage {
+            var result1: (countryCode: String?, error: Error?)?
+            var result2: (countryCode: String?, error: Error?)?
+            
+            func setResult1(_ result: (countryCode: String?, error: Error?)) {
+                result1 = result
+            }
+            
+            func setResult2(_ result: (countryCode: String?, error: Error?)) {
+                result2 = result
+            }
+        }
         
-        Task.detached { @MainActor in
-            result1 = await self.executeGetCurrentCountryCode()
+        let storage = ResultsStorage()
+        
+        let service = sut!
+        let timeout = testTimeout
+        Task {
+            let result = await Self.executeGetCurrentCountryCodeStatic(service: service, timeout: timeout)
+            await storage.setResult1(result)
             expectation.fulfill()
         }
         
-        Task.detached { @MainActor in
-            result2 = await self.executeGetCurrentCountryCode()
+        Task {
+            let result = await Self.executeGetCurrentCountryCodeStatic(service: service, timeout: timeout)
+            await storage.setResult2(result)
             expectation.fulfill()
         }
         
         await fulfillment(of: [expectation], timeout: testTimeout * 2)
         
+        let result1 = await storage.result1
+        let result2 = await storage.result2
         XCTAssertNotNil(result1, "First request should complete")
         XCTAssertNotNil(result2, "Second request should complete")
     }
@@ -322,7 +358,7 @@ final class LocationServiceTests: XCTestCase {
         // Then: Should complete within reasonable time
         
         let startTime = Date()
-        _ = await executeGetCurrentCountryCode()
+        _ = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
         let duration = Date().timeIntervalSince(startTime)
         
         XCTAssertLessThan(duration, testTimeout * 2,
@@ -335,7 +371,7 @@ final class LocationServiceTests: XCTestCase {
         // Then: Should not crash
         
         for _ in 0..<5 {
-            let result = await executeGetCurrentCountryCode()
+            let result = await executeGetCurrentCountryCode(service: sut!, timeout: testTimeout)
             XCTAssertTrue(result.countryCode != nil || result.error != nil,
                          "Each call should return a result or error")
         }
@@ -344,23 +380,89 @@ final class LocationServiceTests: XCTestCase {
     // MARK: - Helper Methods
     
     /// Executes getCurrentCountryCode and returns result or error
+    /// - Parameters:
+    ///   - service: The LocationService to test
+    ///   - timeout: The timeout for the operation
     /// - Returns: Tuple containing country code and error (if any)
-    private func executeGetCurrentCountryCode() async -> (countryCode: String?, error: Error?) {
+    private func executeGetCurrentCountryCode(service: LocationService, timeout: TimeInterval) async -> (countryCode: String?, error: Error?) {
         let expectation = expectation(description: "getCurrentCountryCode completes")
-        var countryCode: String?
-        var error: Error?
+        
+        // Use an actor to safely capture the result
+        actor ResultCapture {
+            var countryCode: String?
+            var error: Error?
+            
+            func setCountryCode(_ code: String?) {
+                countryCode = code
+            }
+            
+            func setError(_ err: Error?) {
+                error = err
+            }
+            
+            func getResult() -> (countryCode: String?, error: Error?) {
+                return (countryCode, error)
+            }
+        }
+        
+        let capture = ResultCapture()
         
         Task {
             do {
-                countryCode = try await sut.getCurrentCountryCode()
+                let code = try await service.getCurrentCountryCode()
+                await capture.setCountryCode(code)
             } catch let err {
-                error = err
+                await capture.setError(err)
             }
             expectation.fulfill()
         }
         
-        await fulfillment(of: [expectation], timeout: testTimeout)
+        await fulfillment(of: [expectation], timeout: timeout)
         
-        return (countryCode, error)
+        return await capture.getResult()
+    }
+    
+    /// Static version that doesn't require self - for use in detached tasks
+    /// - Parameters:
+    ///   - service: The LocationService to test
+    ///   - timeout: The timeout for the operation
+    /// - Returns: Tuple containing country code and error (if any)
+    private static func executeGetCurrentCountryCodeStatic(service: LocationService, timeout: TimeInterval) async -> (countryCode: String?, error: Error?) {
+        // Use an actor to safely capture the result
+        actor ResultCapture {
+            var countryCode: String?
+            var error: Error?
+            
+            func setCountryCode(_ code: String?) {
+                countryCode = code
+            }
+            
+            func setError(_ err: Error?) {
+                error = err
+            }
+            
+            func getResult() -> (countryCode: String?, error: Error?) {
+                return (countryCode, error)
+            }
+        }
+        
+        let capture = ResultCapture()
+        
+        // Use a continuation to wait for the result
+        return await withCheckedContinuation { continuation in
+            Task {
+                do {
+                    let code = try await service.getCurrentCountryCode()
+                    await capture.setCountryCode(code)
+                } catch let err {
+                    await capture.setError(err)
+                }
+                
+                // Wait a bit to ensure the capture is set
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                let result = await capture.getResult()
+                continuation.resume(returning: result)
+            }
+        }
     }
 }
